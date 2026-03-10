@@ -220,7 +220,7 @@ jobs:
   update-manifest:
     name: "🚀 Update K8s Manifest"
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' 
     permissions:
       contents: write # Needed to push manifest changes
     steps:
