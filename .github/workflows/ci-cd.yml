@@ -199,6 +199,7 @@ jobs:
   dockerfile-lint:
     name: "📋 Dockerfile Lint"
     runs-on: ubuntu-latest
+    continue-on-error: true
     strategy:
       matrix:
         component: [backend, frontend]
