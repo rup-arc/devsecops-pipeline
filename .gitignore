@@ -13,6 +13,6 @@ terraform/crash.log
 # Docker
 *.tar
 
-# OS
+# OS..
 .DS_Store
 Thumbs.db
