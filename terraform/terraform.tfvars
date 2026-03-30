@@ -3,4 +3,4 @@ location            = "eastus"
 acr_name            = "acraksjerneydemo123" # Remember, this must be globally unique
 cluster_name        = "aks-jerney-demo-cluster"
 dns_prefix          = "aks-jerney"
-node_count          = 2
+node_count          = 1
