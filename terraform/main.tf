@@ -13,13 +13,13 @@ provider "azurerm" {
 
 # 1. Resource Group
 resource "azurerm_resource_group" "aks_rg" {
-  name     = "rg-aks-store-demo"
+  name     = "rg-aks-jerney-demo"
   location = "eastus"
 }
 
 # 2. Azure Container Registry (ACR)
 resource "azurerm_container_registry" "acr" {
-  name                = "acraksstoredemo123" # IMPORTANT: This must be globally unique. Change the numbers if it fails.
+  name                = "acraksjerneydemo123" # IMPORTANT: This must be globally unique. Change the numbers if it fails.
   resource_group_name = azurerm_resource_group.aks_rg.name
   location            = azurerm_resource_group.aks_rg.location
   sku                 = "Basic"            # Basic is perfect for personal projects
@@ -33,8 +33,8 @@ module "aks" {
 
   resource_group_name = azurerm_resource_group.aks_rg.name
   location            = azurerm_resource_group.aks_rg.location
-  prefix              = "aks-store"
-  cluster_name        = "aks-store-demo-cluster"
+  prefix              = "aks-jerney"
+  cluster_name        = "aks-jerney-demo-cluster"
 
   identity_type                     = "SystemAssigned"
   role_based_access_control_enabled = true
