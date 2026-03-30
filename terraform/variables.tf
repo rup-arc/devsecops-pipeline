@@ -1,29 +1,31 @@
-variable "aws_region" {
-  description = "AWS region to deploy the EKS cluster"
+variable "resource_group_name" {
   type        = string
-  default     = "us-east-1"
+  description = "The name of the resource group."
 }
 
-variable "environment" {
-  description = "Environment name (dev, staging, prod)"
+variable "location" {
   type        = string
-  default     = "dev"
+  description = "The Azure region to deploy resources."
+  default     = "eastus" # You can set defaults for values that rarely change
+}
+
+variable "acr_name" {
+  type        = string
+  description = "The globally unique name for the Azure Container Registry."
 }
 
 variable "cluster_name" {
-  description = "Name of the EKS cluster"
   type        = string
-  default     = "jerney-eks"
+  description = "The name of the AKS cluster."
 }
 
-variable "cluster_version" {
-  description = "Kubernetes version for EKS"
+variable "dns_prefix" {
   type        = string
-  default     = "1.32"
+  description = "The DNS prefix for the AKS cluster."
 }
 
-variable "vpc_cidr" {
-  description = "CIDR block for the VPC"
-  type        = string
-  default     = "10.0.0.0/16"
+variable "node_count" {
+  type        = number
+  description = "The number of nodes in the default node pool."
+  default     = 2
 }
