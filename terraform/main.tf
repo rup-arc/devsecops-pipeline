@@ -1,82 +1,70 @@
-# ==============================================================
-# Jerney EKS Cluster - Auto Mode
-# ==============================================================
-
-data "aws_availability_zones" "available" {
-  filter {
-    name   = "opt-in-status"
-    values = ["opt-in-not-required"]
+terraform {
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 3.90"
+    }
   }
 }
 
-locals {
-  azs = slice(data.aws_availability_zones.available.names, 0, 3)
+provider "azurerm" {
+  features {}
 }
 
-# ---- VPC ----
-module "vpc" {
-  source  = "terraform-aws-modules/vpc/aws"
-  version = "~> 5.0"
-
-  name = "${var.cluster_name}-vpc"
-  cidr = var.vpc_cidr
-
-  azs             = local.azs
-  private_subnets = [for k, v in local.azs : cidrsubnet(var.vpc_cidr, 4, k)]
-  public_subnets  = [for k, v in local.azs : cidrsubnet(var.vpc_cidr, 8, k + 48)]
-
-  enable_nat_gateway = true
-  single_nat_gateway = true # Cost-saving for dev; use one per AZ for prod
-
-  # Tags required for EKS Auto Mode to discover subnets
-  public_subnet_tags = {
-    "kubernetes.io/role/elb" = 1
-  }
-
-  private_subnet_tags = {
-    "kubernetes.io/role/internal-elb" = 1
-  }
+# 1. Resource Group
+resource "azurerm_resource_group" "aks_rg" {
+  name     = "rg-aks-store-demo"
+  location = "eastus"
 }
 
-# ---- EKS Cluster (Auto Mode) ----
-module "eks" {
-  source  = "terraform-aws-modules/eks/aws"
-  version = "~> 20.31"
+# 2. Azure Container Registry (ACR)
+resource "azurerm_container_registry" "acr" {
+  name                = "acraksstoredemo123" # IMPORTANT: This must be globally unique. Change the numbers if it fails.
+  resource_group_name = azurerm_resource_group.aks_rg.name
+  location            = azurerm_resource_group.aks_rg.location
+  sku                 = "Basic"            # Basic is perfect for personal projects
+  admin_enabled       = false              # Security best practice: use managed identities instead of admin credentials
+}
 
-  cluster_name    = var.cluster_name
-  cluster_version = var.cluster_version
+# 3. AKS Cluster (Official Module)
+module "aks" {
+  source  = "Azure/aks/azurerm"
+  version = "8.0.0" 
 
-  # Auto Mode — EKS manages node groups, kube-proxy, CoreDNS, etc.
-  cluster_compute_config = {
-    enabled    = true
-    node_pools = ["general-purpose", "system"]
-  }
+  resource_group_name = azurerm_resource_group.aks_rg.name
+  location            = azurerm_resource_group.aks_rg.location
+  prefix              = "aks-store"
+  cluster_name        = "aks-store-demo-cluster"
 
-  # Networking
-  vpc_id     = module.vpc.vpc_id
-  subnet_ids = module.vpc.private_subnets
+  identity_type                     = "SystemAssigned"
+  role_based_access_control_enabled = true
 
-  # Security: enable private endpoint, public for initial kubectl access
-  cluster_endpoint_public_access  = true
-  cluster_endpoint_private_access = true
+  network_plugin = "azure"
+  network_policy = "azure"
 
-  # Auth mode required for Auto Mode
-  authentication_mode = "API"
+  agents_count = 2
+  agents_size  = "Standard_D2s_v3"
 
-  # Security: envelope encryption for secrets at rest
-  cluster_encryption_config = {
-    resources = ["secrets"]
-  }
+  log_analytics_workspace_enabled = false
+}
 
-  # Security: enable logging
-  cluster_enabled_log_types = [
-    "api",
-    "audit",
-    "authenticator",
-    "controllerManager",
-    "scheduler"
-  ]
+# 4. Role Assignment: Allow AKS to pull images from ACR
+resource "azurerm_role_assignment" "aks_to_acr" {
+  principal_id                     = module.aks.kubelet_identity[0].object_id
+  role_definition_name             = "AcrPull"
+  scope                            = azurerm_container_registry.acr.id
+  skip_service_principal_aad_check = true # Helps prevent timing issues during initial creation
+}
 
-  # Allow current caller (your IAM user/role) to manage the cluster
-  enable_cluster_creator_admin_permissions = true
+# 5. Outputs for your GitHub Actions Pipeline
+output "cluster_name" {
+  value = module.aks.aks_name
+}
+
+output "resource_group_name" {
+  value = azurerm_resource_group.aks_rg.name
+}
+
+output "acr_login_server" {
+  value = azurerm_container_registry.acr.login_server
 }
