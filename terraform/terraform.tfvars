@@ -1,5 +1,6 @@
-aws_region      = "us-east-1"
-environment     = "dev"
-cluster_name    = "jerney-eks"
-cluster_version = "1.32"
-vpc_cidr        = "10.0.0.0/16"
+resource_group_name = "rg-aks-jerney-demo"
+location            = "eastus"
+acr_name            = "acraksjerneydemo123" # Remember, this must be globally unique
+cluster_name        = "aks-jerney-demo-cluster"
+dns_prefix          = "aks-jerney"
+node_count          = 2
