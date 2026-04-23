@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: jerney_password
       POSTGRES_DB: jerney_db
     ports:
-      - "5433:5432"  # Host port 5433 mapped to container port 5432
+      - "5433:5432"  
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -28,19 +28,19 @@ services:
     container_name: jerney-backend
     restart: unless-stopped
     environment:
-      DB_HOST: db  # Refers to the `db` service defined below
+      DB_HOST: db  
       DB_PORT: 5432
       DB_USER: jerney_user
       DB_PASSWORD: jerney_password
       DB_NAME: jerney_db
-      PORT: "5000"  # Environment variable for the backend to use port 5000
+      PORT: "5000"
     expose:
-      - "5000"  # Exposing port 5000 within the Docker network
+      - "5000"  
     depends_on:
       db:
-        condition: service_healthy  # Ensures the backend waits for the DB to be healthy
+        condition: service_healthy  
     healthcheck:
-      test: ["CMD-SHELL", "curl --fail http://localhost:5000/api/health || exit 1"]  # Custom health check for backend
+      test: ["CMD-SHELL", "curl --fail http://localhost:5000/api/health || exit 1"]  
       interval: 30s
       retries: 3
       start_period: 10s
@@ -57,10 +57,10 @@ services:
     container_name: jerney-frontend
     restart: unless-stopped
     ports:
-      - "8080:8080"  # Exposing frontend on port 8080 (change to 80 if port available)
+      - "8080:8080" 
     depends_on:
       backend:
-        condition: service_healthy  # Ensures the frontend waits for the backend to be healthy
+        condition: service_healthy 
     security_opt:
       - no-new-privileges:true
 
